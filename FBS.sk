@@ -1,0 +1,113 @@
+#FBS = Fronts Barter System
+#	
+#	
+#
+
+command /itemalias  [text] [text] [text]
+		permission: obam.admin
+		usage: &c/itemalias [add/remove] (sign name) (alias)
+		aliases: /ia
+			trigger:
+				argument 1 is blank:
+					send "&7Correct usage is /itemalias [add/remove] [alias] (item)" to player
+			argument 1 is "help" or "h":
+				message "&3--[&6&lAlias Help&3]--"
+				message "&cRequired = [] Optional = ()"
+				message "&a * /itemalias [list/l] (alias)"
+				message "&7 Shows you what item is assigned to the specified alias."
+				message "&7 If (alias) is left blank, gives you list of all aliases."
+				message "&a * /itemalias [list/l] [check/c] [item]"
+				message "&7 Retrieves all know aliases for an item."
+				message "&a * /itemalias [add/remove] [alias] (item)"
+				message "&7 Adds or removes an alias."
+			argument 2 is greater than 16 characters:
+				message "a4You must limit your aliases to 16 characters!"
+				stop
+			argument 1 is "list" or "l":
+				argument 2 is blank:
+					send "&3--[&6&lKnown Aliases&3]--"
+					loop {item.alias::*}:
+						set {_item} to loop-index
+						send "&7%{_item}%" to player
+				argument 2 is "check" of "c":
+					set {_check} to argument 3
+					send "&3--[&6&lKnown Aliases for &7%{_check}%&3]--"
+					loop {item.alias::*}:
+						loop-value is {_check}:
+							message "&7%loop-index%"
+				set {_item} to %argument 2%
+				send "&3--[&6&lAssigned item for &7%{_item}%&3]--"
+				loop {item.alias::*}:
+					loop-index is {_item}:
+						set {_alias} to value of {item.alias::%{_item}%}
+						send "&7%{_alias}%" to player
+			argument 1 is "add" or "a":
+				argument 2 is blank:
+					send "&4Add what?" to player
+					stop
+				argument 3 is blank:
+					send "&4%argument 2% what?" to player
+					stop
+				{item.alias::%argument 2%} exists:
+					set {_alias} to value of {item.alias::%argument 2%}
+					message "a4The alias of &7%argument 2%&4 already exists for &7%{_alias}%&4, you must remove the current alias first!"
+					stop
+				set {item.alias::*} to %argument 2%
+				set {item.alias::%argument 2%} to %argument 3%
+			argument 1 is "remove" or "r":
+				argument 2 is blank:
+					send "&4Remove what?" to player
+					stop
+				{item.alias::%argument 2%} exists:
+					delete {item.alias::%argument 2%}
+					message "a4The alias of &7%argument 2%&4 has been removed!"
+				message "a4The alias of &7%argument 2%&4 does not exist, please use &7/itemalias list&4!"
+
+
+
+
+
+on sign change:
+	line 1 of block contains ("(Buy|B)" and ":")
+	line 3 of block contains ("(Pay|P)" and ":"):
+		set {_buyline} to line 1 parsed as an integer
+		{_buyline} is 0:
+			message "&cYou must enter a number on the &aFirst&c line of the sign!"
+			stop
+		{_buyline} is less than 0:
+			message "&cYou may not enter a negative number on the &aFirst&c line of the sign!"
+			stop
+		set line 1 to "&9Buy : %{_buyline}%"
+		set {_buyitem} to "%line 2 of block%"
+		{_buyitem} is not item:
+			{_buyitem} is not an item id:
+				{item.alias::%{_buyitem}%} does not exist:
+					message "&a%{_buyitem}%&c is not a recognised item, try using an item ID"
+					stop
+			set {_buy.convert} to item with id of {_buyitem}
+			set {_buyitem} to the first 16 characters of {_buy.convert}
+		set line 2 to "%{_buyitem}%"
+		set {_payline} to line 3 parsed as an integer
+		{_payline} is 0:
+			message "&cYou must enter a number on the &aThird&c line of the sign!"
+			stop
+		{_payline} is less than 0:
+			message "&cYou may not enter a negative number on the &aThird&c line of the sign!"
+			stop
+		set line 3 to "&9Pay : %{_payline}%"
+		set {_payitem} to "%line 4 of block%"
+		{_payitem} is not item:
+			{_payitem} is not an item id:
+				{item.alias::%{_payitem}%} does not exist:
+					message "&a%{_payitem}%&c is not a recognised item, try using an item ID"
+					stop
+			set {_pay.convert} to item with id of {_payitem}
+			set {_payitem} to the first 16 characters of {_pay.convert}
+		set line 4 to "%{_payitem}%"
+		set {shop.list::%location of block%} to player
+		
+
+		
+# current progress stops here		
+		# next - work on right click of a sign
+		# then on sign break, cancel if shop sign
